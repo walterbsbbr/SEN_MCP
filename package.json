@@ -1,0 +1,10 @@
+{
+  "name": "senmcp",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "echo 'Build controlado pelo vercel.json'"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
