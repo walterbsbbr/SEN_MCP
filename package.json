@@ -2,9 +2,9 @@
   "name": "senmcp",
   "version": "1.0.0",
   "scripts": {
-    "build": "echo 'Build controlado pelo vercel.json'"
+    "build": "cd frontend && npm install && npm run build"
   },
   "engines": {
-    "node": "18.x"
+    "node": "24.x"
   }
 }
