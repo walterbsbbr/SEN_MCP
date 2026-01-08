@@ -5,6 +5,6 @@
     "build": "echo 'Build controlado pelo vercel.json'"
   },
   "engines": {
-    "node": "18.x"
+    "node": "24.x"
   }
 }
