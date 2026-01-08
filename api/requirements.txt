@@ -1,9 +1,6 @@
-﻿fastapi
+fastapi
 uvicorn
 python-dotenv
 groq
 google-generativeai
-httpx
-mcp
-fastmcp
 requests

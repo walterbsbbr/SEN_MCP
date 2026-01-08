@@ -1,12 +1,9 @@
 """
-Servidor MCP para APIs Públicas do Senado Federal e Câmara dos Deputados
-Dados Abertos - Governo Brasileiro
+Ferramentas para APIs Públicas do Senado Federal e Câmara dos Deputados
+Versão adaptada para Vercel (sem dependência de MCP stdio)
 """
-from fastmcp import FastMCP
 import requests
 import xml.etree.ElementTree as ET
-
-mcp = FastMCP("SenadoCamara")
 
 
 def _call_api(base_url: str, endpoint: str, params: dict = None) -> dict:
@@ -96,7 +93,6 @@ def _call_senado_api(endpoint: str, format_json: bool = True) -> dict:
 # SENADO FEDERAL
 # ========================================
 
-@mcp.tool()
 def buscar_senadores(uf: str = None) -> dict:
     """
     Lista senadores em exercício, opcionalmente filtrados por UF.
@@ -114,7 +110,6 @@ def buscar_senadores(uf: str = None) -> dict:
     return _call_senado_api(endpoint, format_json=True)
 
 
-@mcp.tool()
 def buscar_proposicoes_senado(sigla: str, ano: str = None) -> dict:
     """
     Busca proposições no Senado por tipo e ano.
@@ -133,7 +128,6 @@ def buscar_proposicoes_senado(sigla: str, ano: str = None) -> dict:
     return _call_senado_api(endpoint, format_json=True)
 
 
-@mcp.tool()
 def detalhes_proposicao_senado(codigo: str) -> dict:
     """
     Obtém detalhes completos de uma proposição do Senado.
@@ -147,7 +141,6 @@ def detalhes_proposicao_senado(codigo: str) -> dict:
     return _call_senado_api(f"/proposicao/{codigo}", format_json=True)
 
 
-@mcp.tool()
 def votacoes_senado(data_inicio: str, data_fim: str = None) -> dict:
     """
     Lista votações do Senado em um período.
@@ -166,7 +159,6 @@ def votacoes_senado(data_inicio: str, data_fim: str = None) -> dict:
     return _call_senado_api(endpoint, format_json=True)
 
 
-@mcp.tool()
 def listar_comissoes_senado(tipo: str = "permanente") -> dict:
     """
     Lista comissões do Senado Federal.
@@ -197,7 +189,6 @@ def listar_comissoes_senado(tipo: str = "permanente") -> dict:
     return _call_senado_api(endpoint, format_json=False)
 
 
-@mcp.tool()
 def detalhes_comissao_senado(codigo: str) -> dict:
     """
     Obtém detalhes de uma comissão do Senado.
@@ -212,7 +203,6 @@ def detalhes_comissao_senado(codigo: str) -> dict:
     return _call_senado_api(endpoint, format_json=False)
 
 
-@mcp.tool()
 def membros_comissao_senado(codigo: str) -> dict:
     """
     Lista membros de uma comissão do Senado.
@@ -229,7 +219,6 @@ def membros_comissao_senado(codigo: str) -> dict:
     )
 
 
-@mcp.tool()
 def reunioes_comissao_senado(codigo: str, data_inicio: str = None, data_fim: str = None) -> dict:
     """
     Lista reuniões de uma comissão do Senado.
@@ -257,7 +246,6 @@ def reunioes_comissao_senado(codigo: str, data_inicio: str = None, data_fim: str
     )
 
 
-@mcp.tool()
 def buscar_agenda_comissao(data_inicio: str, data_fim: str = None) -> dict:
     """
     Busca a agenda de comissões do Senado em um período para encontrar códigos de reuniões.
@@ -278,7 +266,6 @@ def buscar_agenda_comissao(data_inicio: str, data_fim: str = None) -> dict:
     return _call_senado_api(endpoint, format_json=True)
 
 
-@mcp.tool()
 def detalhes_reuniao_comissao(codigo_reuniao: str) -> dict:
     """
     Obtém detalhes completos de uma reunião específica de comissão pelo código.
@@ -295,29 +282,22 @@ def detalhes_reuniao_comissao(codigo_reuniao: str) -> dict:
     return _call_senado_api(endpoint, format_json=True)
 
 
-@mcp.tool()
 def videos_reuniao_comissao(codigo_reuniao: str) -> dict:
     """
     Obtém os vídeos (Unidades Descritivas) de uma reunião específica de comissão.
     Use buscar_agenda_comissao() ou detalhes_reuniao_comissao() primeiro para encontrar o código da reunião.
 
     Args:
-        codigo_reuniao: Código da reunião (mesmo usado em detalhes_reuniao_comissao)
+        codigo_reuniao: Código da reunião (ex: "72345")
 
     Returns:
-        Lista de vídeos da reunião com links, duração e descrição
-
-    Exemplo:
-        Para obter vídeos da reunião da CCJ de 14/10/2024:
-        1. buscar_agenda_comissao("20241014", "20241014") -> encontra codigo_reuniao
-        2. videos_reuniao_comissao(codigo_reuniao) -> retorna os vídeos
+        Lista de vídeos disponíveis da reunião
     """
-    endpoint = f"/taquigrafia/videos/reuniao/{codigo_reuniao}"
+    endpoint = f"/comissao/reuniao/{codigo_reuniao}/videos"
 
     return _call_senado_api(endpoint, format_json=True)
 
 
-@mcp.tool()
 def agenda_senado(data: str = None) -> dict:
     """
     Obtém a agenda geral do Senado Federal (sessões plenárias).
@@ -341,7 +321,6 @@ def agenda_senado(data: str = None) -> dict:
     )
 
 
-@mcp.tool()
 def materia_senado(codigo: str) -> dict:
     """
     Obtém informações completas sobre uma matéria legislativa do Senado.
@@ -358,7 +337,6 @@ def materia_senado(codigo: str) -> dict:
     )
 
 
-@mcp.tool()
 def autorias_senador(codigo_senador: str) -> dict:
     """
     Lista proposições de autoria de um senador.
@@ -375,7 +353,6 @@ def autorias_senador(codigo_senador: str) -> dict:
     )
 
 
-@mcp.tool()
 def listar_partidos_senado() -> dict:
     """
     Obtém a lista dos Partidos Políticos em atividade e/ou extintos no Senado Federal.
@@ -388,7 +365,6 @@ def listar_partidos_senado() -> dict:
     )
 
 
-@mcp.tool()
 def listar_tipos_cargo_comissoes() -> dict:
     """
     Obtém a lista de Tipos de Cargo nas Comissões do Senado Federal e Congresso Nacional.
@@ -401,7 +377,6 @@ def listar_tipos_cargo_comissoes() -> dict:
     )
 
 
-@mcp.tool()
 def mesa_diretora_congresso_nacional() -> dict:
     """
     Obtém a Composição dos integrantes da Mesa Diretora do Congresso Nacional.
@@ -414,7 +389,6 @@ def mesa_diretora_congresso_nacional() -> dict:
     )
 
 
-@mcp.tool()
 def mesa_diretora_senado_federal() -> dict:
     """
     Obtém a Composição dos integrantes da Mesa Diretora do Senado Federal.
@@ -431,7 +405,6 @@ def mesa_diretora_senado_federal() -> dict:
 # CÂMARA DOS DEPUTADOS
 # ========================================
 
-@mcp.tool()
 def buscar_deputados(siglaUf: str = None, siglaPartido: str = None) -> dict:
     """
     Lista deputados em exercício, com filtros opcionais.
@@ -456,7 +429,6 @@ def buscar_deputados(siglaUf: str = None, siglaPartido: str = None) -> dict:
     )
 
 
-@mcp.tool()
 def detalhes_deputado(id_deputado: str) -> dict:
     """
     Obtém informações detalhadas de um deputado.
@@ -473,7 +445,6 @@ def detalhes_deputado(id_deputado: str) -> dict:
     )
 
 
-@mcp.tool()
 def buscar_proposicoes_camara(
     siglaTipo: str = None,
     ano: str = None,
@@ -510,7 +481,6 @@ def buscar_proposicoes_camara(
     )
 
 
-@mcp.tool()
 def detalhes_proposicao_camara(id_proposicao: str) -> dict:
     """
     Obtém detalhes completos de uma proposição da Câmara.
@@ -527,7 +497,6 @@ def detalhes_proposicao_camara(id_proposicao: str) -> dict:
     )
 
 
-@mcp.tool()
 def votacoes_camara(
     id_proposicao: str = None,
     dataInicio: str = None,
@@ -560,7 +529,6 @@ def votacoes_camara(
     )
 
 
-@mcp.tool()
 def despesas_deputado(id_deputado: str, ano: str, mes: str = None) -> dict:
     """
     Obtém despesas da cota parlamentar de um deputado.
@@ -585,7 +553,6 @@ def despesas_deputado(id_deputado: str, ano: str, mes: str = None) -> dict:
     )
 
 
-@mcp.tool()
 def eventos_camara(dataInicio: str = None, dataFim: str = None) -> dict:
     """
     Lista eventos (reuniões, audiências) da Câmara.
@@ -611,7 +578,6 @@ def eventos_camara(dataInicio: str = None, dataFim: str = None) -> dict:
     )
 
 
-@mcp.tool()
 def listar_orgaos_camara() -> dict:
     """
     Lista todos os órgãos (comissões, frentes, etc) da Câmara.
@@ -628,7 +594,6 @@ def listar_orgaos_camara() -> dict:
     )
 
 
-@mcp.tool()
 def detalhes_orgao_camara(id_orgao: str) -> dict:
     """
     Obtém detalhes de um órgão (comissão) da Câmara.
@@ -645,7 +610,6 @@ def detalhes_orgao_camara(id_orgao: str) -> dict:
     )
 
 
-@mcp.tool()
 def membros_orgao_camara(id_orgao: str) -> dict:
     """
     Lista membros de um órgão (comissão) da Câmara.
@@ -662,7 +626,6 @@ def membros_orgao_camara(id_orgao: str) -> dict:
     )
 
 
-@mcp.tool()
 def partidos_camara() -> dict:
     """
     Lista partidos com representação na Câmara dos Deputados.
@@ -679,7 +642,6 @@ def partidos_camara() -> dict:
     )
 
 
-@mcp.tool()
 def blocos_camara() -> dict:
     """
     Lista blocos parlamentares da Câmara dos Deputados.
@@ -696,7 +658,6 @@ def blocos_camara() -> dict:
     )
 
 
-@mcp.tool()
 def frentes_parlamentares() -> dict:
     """
     Lista frentes parlamentares da Câmara dos Deputados.
@@ -713,6 +674,477 @@ def frentes_parlamentares() -> dict:
     )
 
 
-if __name__ == "__main__":
-    # Roda o servidor MCP
-    mcp.run()
+# Mapeamento de funções disponíveis
+AVAILABLE_TOOLS = {
+    "buscar_senadores": buscar_senadores,
+    "buscar_proposicoes_senado": buscar_proposicoes_senado,
+    "detalhes_proposicao_senado": detalhes_proposicao_senado,
+    "votacoes_senado": votacoes_senado,
+    "listar_comissoes_senado": listar_comissoes_senado,
+    "detalhes_comissao_senado": detalhes_comissao_senado,
+    "membros_comissao_senado": membros_comissao_senado,
+    "reunioes_comissao_senado": reunioes_comissao_senado,
+    "buscar_agenda_comissao": buscar_agenda_comissao,
+    "detalhes_reuniao_comissao": detalhes_reuniao_comissao,
+    "videos_reuniao_comissao": videos_reuniao_comissao,
+    "agenda_senado": agenda_senado,
+    "materia_senado": materia_senado,
+    "autorias_senador": autorias_senador,
+    "listar_partidos_senado": listar_partidos_senado,
+    "listar_tipos_cargo_comissoes": listar_tipos_cargo_comissoes,
+    "mesa_diretora_congresso_nacional": mesa_diretora_congresso_nacional,
+    "mesa_diretora_senado_federal": mesa_diretora_senado_federal,
+    "buscar_deputados": buscar_deputados,
+    "detalhes_deputado": detalhes_deputado,
+    "buscar_proposicoes_camara": buscar_proposicoes_camara,
+    "detalhes_proposicao_camara": detalhes_proposicao_camara,
+    "votacoes_camara": votacoes_camara,
+    "despesas_deputado": despesas_deputado,
+    "eventos_camara": eventos_camara,
+    "listar_orgaos_camara": listar_orgaos_camara,
+    "detalhes_orgao_camara": detalhes_orgao_camara,
+    "membros_orgao_camara": membros_orgao_camara,
+    "partidos_camara": partidos_camara,
+    "blocos_camara": blocos_camara,
+    "frentes_parlamentares": frentes_parlamentares,
+}
+
+
+# Schema das ferramentas para Gemini/Groq
+TOOLS_SCHEMA = [
+    {
+        "name": "buscar_senadores",
+        "description": "Lista senadores em exercício, opcionalmente filtrados por UF.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "uf": {
+                    "type": "STRING",
+                    "description": "Sigla do estado (ex: 'SP', 'RJ', 'MG') ou None para todos"
+                }
+            }
+        }
+    },
+    {
+        "name": "buscar_proposicoes_senado",
+        "description": "Busca proposições no Senado por tipo e ano.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "sigla": {
+                    "type": "STRING",
+                    "description": "Tipo da proposição (ex: 'PEC', 'PL', 'PLS', 'MPV')"
+                },
+                "ano": {
+                    "type": "STRING",
+                    "description": "Ano da proposição (ex: '2024', '2025')"
+                }
+            },
+            "required": ["sigla"]
+        }
+    },
+    {
+        "name": "detalhes_proposicao_senado",
+        "description": "Obtém detalhes completos de uma proposição do Senado.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "codigo": {
+                    "type": "STRING",
+                    "description": "Código da proposição (ex: '132046')"
+                }
+            },
+            "required": ["codigo"]
+        }
+    },
+    {
+        "name": "votacoes_senado",
+        "description": "Lista votações do Senado em um período.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "data_inicio": {
+                    "type": "STRING",
+                    "description": "Data inicial no formato AAAAMMDD (ex: '20250101')"
+                },
+                "data_fim": {
+                    "type": "STRING",
+                    "description": "Data final no formato AAAAMMDD (opcional)"
+                }
+            },
+            "required": ["data_inicio"]
+        }
+    },
+    {
+        "name": "listar_comissoes_senado",
+        "description": "Lista comissões do Senado Federal.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "tipo": {
+                    "type": "STRING",
+                    "description": "Tipo da comissão - 'permanente', 'cpi', 'temporaria', 'orgaos' (padrão: 'permanente')"
+                }
+            }
+        }
+    },
+    {
+        "name": "detalhes_comissao_senado",
+        "description": "Obtém detalhes de uma comissão do Senado.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "codigo": {
+                    "type": "STRING",
+                    "description": "Código numérico da comissão (ex: '40' para CAS, '38' para CAE, '34' para CCJ)"
+                }
+            },
+            "required": ["codigo"]
+        }
+    },
+    {
+        "name": "membros_comissao_senado",
+        "description": "Lista membros de uma comissão do Senado.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "codigo": {
+                    "type": "STRING",
+                    "description": "Código da comissão"
+                }
+            },
+            "required": ["codigo"]
+        }
+    },
+    {
+        "name": "reunioes_comissao_senado",
+        "description": "Lista reuniões de uma comissão do Senado.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "codigo": {
+                    "type": "STRING",
+                    "description": "Código da comissão"
+                },
+                "data_inicio": {
+                    "type": "STRING",
+                    "description": "Data inicial no formato AAAAMMDD (opcional)"
+                },
+                "data_fim": {
+                    "type": "STRING",
+                    "description": "Data final no formato AAAAMMDD (opcional)"
+                }
+            },
+            "required": ["codigo"]
+        }
+    },
+    {
+        "name": "buscar_agenda_comissao",
+        "description": "Busca a agenda de comissões do Senado em um período para encontrar códigos de reuniões.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "data_inicio": {
+                    "type": "STRING",
+                    "description": "Data inicial no formato YYYYMMDD (ex: '20251209')"
+                },
+                "data_fim": {
+                    "type": "STRING",
+                    "description": "Data final no formato YYYYMMDD (opcional)"
+                }
+            },
+            "required": ["data_inicio"]
+        }
+    },
+    {
+        "name": "detalhes_reuniao_comissao",
+        "description": "Obtém detalhes completos de uma reunião específica de comissão.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "codigo_reuniao": {
+                    "type": "STRING",
+                    "description": "Código da reunião obtido via buscar_agenda_comissao"
+                }
+            },
+            "required": ["codigo_reuniao"]
+        }
+    },
+    {
+        "name": "videos_reuniao_comissao",
+        "description": "Obtém os vídeos de uma reunião específica de comissão.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "codigo_reuniao": {
+                    "type": "STRING",
+                    "description": "Código da reunião"
+                }
+            },
+            "required": ["codigo_reuniao"]
+        }
+    },
+    {
+        "name": "agenda_senado",
+        "description": "Obtém a agenda geral do Senado Federal (sessões plenárias).",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "data": {
+                    "type": "STRING",
+                    "description": "Data no formato AAAAMMDD (ex: '20250123'). Se omitido, retorna agenda atual."
+                }
+            }
+        }
+    },
+    {
+        "name": "materia_senado",
+        "description": "Obtém informações completas sobre uma matéria legislativa do Senado.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "codigo": {
+                    "type": "STRING",
+                    "description": "Código da matéria (ex: '132046')"
+                }
+            },
+            "required": ["codigo"]
+        }
+    },
+    {
+        "name": "autorias_senador",
+        "description": "Lista proposições de autoria de um senador.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "codigo_senador": {
+                    "type": "STRING",
+                    "description": "Código do senador"
+                }
+            },
+            "required": ["codigo_senador"]
+        }
+    },
+    {
+        "name": "listar_partidos_senado",
+        "description": "Obtém a lista dos Partidos Políticos em atividade e/ou extintos no Senado Federal.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {}
+        }
+    },
+    {
+        "name": "listar_tipos_cargo_comissoes",
+        "description": "Obtém a lista de Tipos de Cargo nas Comissões do Senado Federal e Congresso Nacional.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {}
+        }
+    },
+    {
+        "name": "mesa_diretora_congresso_nacional",
+        "description": "Obtém a Composição dos integrantes da Mesa Diretora do Congresso Nacional.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {}
+        }
+    },
+    {
+        "name": "mesa_diretora_senado_federal",
+        "description": "Obtém a Composição dos integrantes da Mesa Diretora do Senado Federal.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {}
+        }
+    },
+    {
+        "name": "buscar_deputados",
+        "description": "Lista deputados em exercício, com filtros opcionais.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "siglaUf": {
+                    "type": "STRING",
+                    "description": "Sigla do estado (ex: 'SP', 'RJ')"
+                },
+                "siglaPartido": {
+                    "type": "STRING",
+                    "description": "Sigla do partido (ex: 'PT', 'PL', 'PSDB')"
+                }
+            }
+        }
+    },
+    {
+        "name": "detalhes_deputado",
+        "description": "Obtém informações detalhadas de um deputado.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "id_deputado": {
+                    "type": "STRING",
+                    "description": "ID do deputado"
+                }
+            },
+            "required": ["id_deputado"]
+        }
+    },
+    {
+        "name": "buscar_proposicoes_camara",
+        "description": "Busca proposições na Câmara dos Deputados.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "siglaTipo": {
+                    "type": "STRING",
+                    "description": "Tipo da proposição (ex: 'PL', 'PEC', 'MPV')"
+                },
+                "ano": {
+                    "type": "STRING",
+                    "description": "Ano da proposição (ex: '2024')"
+                },
+                "autor": {
+                    "type": "STRING",
+                    "description": "Nome ou ID do autor"
+                },
+                "keywords": {
+                    "type": "STRING",
+                    "description": "Palavras-chave para busca"
+                }
+            }
+        }
+    },
+    {
+        "name": "detalhes_proposicao_camara",
+        "description": "Obtém detalhes completos de uma proposição da Câmara.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "id_proposicao": {
+                    "type": "STRING",
+                    "description": "ID da proposição"
+                }
+            },
+            "required": ["id_proposicao"]
+        }
+    },
+    {
+        "name": "votacoes_camara",
+        "description": "Lista votações da Câmara dos Deputados.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "id_proposicao": {
+                    "type": "STRING",
+                    "description": "ID da proposição (opcional)"
+                },
+                "dataInicio": {
+                    "type": "STRING",
+                    "description": "Data inicial no formato AAAA-MM-DD"
+                },
+                "dataFim": {
+                    "type": "STRING",
+                    "description": "Data final no formato AAAA-MM-DD"
+                }
+            }
+        }
+    },
+    {
+        "name": "despesas_deputado",
+        "description": "Obtém despesas da cota parlamentar de um deputado.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "id_deputado": {
+                    "type": "STRING",
+                    "description": "ID do deputado"
+                },
+                "ano": {
+                    "type": "STRING",
+                    "description": "Ano das despesas (ex: '2024')"
+                },
+                "mes": {
+                    "type": "STRING",
+                    "description": "Mês das despesas (1-12, opcional)"
+                }
+            },
+            "required": ["id_deputado", "ano"]
+        }
+    },
+    {
+        "name": "eventos_camara",
+        "description": "Lista eventos (reuniões, audiências) da Câmara.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "dataInicio": {
+                    "type": "STRING",
+                    "description": "Data inicial no formato AAAA-MM-DD"
+                },
+                "dataFim": {
+                    "type": "STRING",
+                    "description": "Data final no formato AAAA-MM-DD"
+                }
+            }
+        }
+    },
+    {
+        "name": "listar_orgaos_camara",
+        "description": "Lista todos os órgãos (comissões, frentes, etc) da Câmara.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {}
+        }
+    },
+    {
+        "name": "detalhes_orgao_camara",
+        "description": "Obtém detalhes de um órgão (comissão) da Câmara.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "id_orgao": {
+                    "type": "STRING",
+                    "description": "ID do órgão"
+                }
+            },
+            "required": ["id_orgao"]
+        }
+    },
+    {
+        "name": "membros_orgao_camara",
+        "description": "Lista membros de um órgão (comissão) da Câmara.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "id_orgao": {
+                    "type": "STRING",
+                    "description": "ID do órgão"
+                }
+            },
+            "required": ["id_orgao"]
+        }
+    },
+    {
+        "name": "partidos_camara",
+        "description": "Lista partidos com representação na Câmara dos Deputados.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {}
+        }
+    },
+    {
+        "name": "blocos_camara",
+        "description": "Lista blocos parlamentares da Câmara dos Deputados.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {}
+        }
+    },
+    {
+        "name": "frentes_parlamentares",
+        "description": "Lista frentes parlamentares da Câmara dos Deputados.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {}
+        }
+    }
+]
