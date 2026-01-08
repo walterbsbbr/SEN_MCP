@@ -1,7 +1,5 @@
 import os
-import sys
 import json
-import asyncio
 from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,31 +7,14 @@ from pydantic import BaseModel
 from groq import Groq
 from dotenv import load_dotenv
 
-# Importa as ferramentas diretas (sem MCP)
 from senado_camara_tools import AVAILABLE_TOOLS, TOOLS_SCHEMA
 
-# --- Configuração de Ambiente ---
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ENV_FILE = os.path.join(BASE_DIR, ".env")
-
-# Carrega variáveis de ambiente
-load_dotenv(ENV_FILE)
+load_dotenv()
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-
-# Inicializa cliente Groq
 groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
-# --- Helpers ---
-
-def get_system_date_context():
-    """Retorna a string de contexto com a data atual."""
-    now = datetime.now()
-    return f"Hoje é dia {now.strftime('%d/%m/%Y')} (Dia da semana: {now.strftime('%A')}). O horário atual é {now.strftime('%H:%M')}."
-
-
-# --- App Setup ---
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -42,12 +23,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 class ChatRequest(BaseModel):
     message: str
     history: list = []
     model: str = "gemini"
 
+def get_system_date_context():
+    now = datetime.now()
+    return f"Hoje é dia {now.strftime('%d/%m/%Y')} (Dia da semana: {now.strftime('%A')}). O horário atual é {now.strftime('%H:%M')}."
 
 @app.get("/api/health")
 async def health_check():
@@ -57,7 +40,6 @@ async def health_check():
         "tools_list": list(AVAILABLE_TOOLS.keys())
     }
 
-
 @app.post("/api/chat")
 async def chat_endpoint(request: ChatRequest):
     if request.model == "groq":
@@ -65,15 +47,11 @@ async def chat_endpoint(request: ChatRequest):
     else:
         return await chat_with_gemini(request)
 
-
-# --- Groq Logic ---
-
 async def chat_with_groq(request: ChatRequest):
     if not groq_client:
         raise HTTPException(500, "Groq API key missing")
     
     try:
-        # System prompt FORÇANDO uso de ferramentas
         system_msg = {
             "role": "system",
             "content": f"""Você é um assistente especializado em dados do Senado Federal e Câmara dos Deputados do Brasil. {get_system_date_context()}
@@ -86,7 +64,6 @@ Você tem 31 ferramentas disponíveis. USE-AS para buscar dados reais."""
         }
         messages = [system_msg] + request.history + [{"role": "user", "content": request.message}]
 
-        # Converte ferramentas para formato Groq
         tools_groq = []
         for tool in TOOLS_SCHEMA:
             tools_groq.append({
@@ -112,7 +89,6 @@ Você tem 31 ferramentas disponíveis. USE-AS para buscar dados reais."""
             tool_choice="auto" if tools_groq else None
         )
 
-        # Se há chamadas de ferramentas
         if response.choices[0].message.tool_calls:
             for tool_call in response.choices[0].message.tool_calls:
                 fn_name = tool_call.function.name
@@ -120,7 +96,6 @@ Você tem 31 ferramentas disponíveis. USE-AS para buscar dados reais."""
 
                 print(f"🤖 Groq chamou: {fn_name} com args: {fn_args}")
 
-                # Executa a ferramenta diretamente
                 tool_output = "Erro: ferramenta não encontrada"
                 if fn_name in AVAILABLE_TOOLS:
                     try:
@@ -130,7 +105,6 @@ Você tem 31 ferramentas disponíveis. USE-AS para buscar dados reais."""
                         tool_output = f"Erro ao executar {fn_name}: {str(e)}"
                         print(f"❌ Erro na ferramenta: {e}")
 
-                # Adiciona resultado ao histórico
                 messages.append(response.choices[0].message)
                 messages.append({
                     "role": "tool",
@@ -138,7 +112,6 @@ Você tem 31 ferramentas disponíveis. USE-AS para buscar dados reais."""
                     "tool_call_id": tool_call.id
                 })
 
-                # Faz nova chamada com o resultado
                 final_res = groq_client.chat.completions.create(
                     model="llama-3.3-70b-versatile",
                     messages=messages
@@ -151,9 +124,6 @@ Você tem 31 ferramentas disponíveis. USE-AS para buscar dados reais."""
         print(f"❌ Erro Groq: {e}")
         raise HTTPException(500, str(e))
 
-
-# --- Gemini Logic ---
-
 async def chat_with_gemini(request: ChatRequest):
     try:
         import google.generativeai as genai
@@ -165,7 +135,6 @@ async def chat_with_gemini(request: ChatRequest):
 
     genai.configure(api_key=GOOGLE_API_KEY)
 
-    # System instruction FORÇANDO uso de ferramentas
     system_instruction = f"""Você é um assistente especializado em dados do Senado Federal e Câmara dos Deputados do Brasil. {get_system_date_context()} 
 
 REGRA CRÍTICA: Você DEVE SEMPRE usar as ferramentas disponíveis para responder perguntas sobre:
@@ -194,7 +163,6 @@ Você tem 31 ferramentas disponíveis. USE-AS."""
     try:
         response = chat.send_message(request.message)
 
-        # Loop de execução de ferramentas
         max_iterations = 10
         iteration = 0
 
@@ -204,7 +172,6 @@ Você tem 31 ferramentas disponíveis. USE-AS."""
                 print("⚠️ Limite de iterações atingido")
                 break
 
-            # Verifica se há chamada de ferramenta
             has_function_call = False
             for part in response.candidates[0].content.parts:
                 if hasattr(part, 'function_call') and part.function_call:
@@ -215,7 +182,6 @@ Você tem 31 ferramentas disponíveis. USE-AS."""
 
                     print(f"🤖 Gemini chamou: {fn_name} com args: {fn_args}")
 
-                    # Executa a ferramenta diretamente
                     tool_output = ""
                     if fn_name in AVAILABLE_TOOLS:
                         try:
@@ -229,7 +195,6 @@ Você tem 31 ferramentas disponíveis. USE-AS."""
                         tool_output = f"Ferramenta {fn_name} não encontrada."
                         print(f"⚠️ Ferramenta não encontrada: {fn_name}")
 
-                    # Envia resultado de volta ao Gemini
                     response = chat.send_message(
                         genai.protos.Content(parts=[
                             genai.protos.Part(
@@ -250,12 +215,3 @@ Você tem 31 ferramentas disponíveis. USE-AS."""
     except Exception as e:
         print(f"❌ Erro Gemini: {e}")
         return {"reply": f"Erro interno: {e}"}
-
-
-# Para desenvolvimento local
-if __name__ == "__main__":
-    import uvicorn
-    print("🚀 Iniciando servidor na porta 8000...")
-    print(f"📊 {len(AVAILABLE_TOOLS)} ferramentas carregadas (31 esperadas)")
-    print(f"✅ Ferramentas: {', '.join(list(AVAILABLE_TOOLS.keys())[:5])}...")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
