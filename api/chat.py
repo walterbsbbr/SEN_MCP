@@ -32,7 +32,11 @@ def get_system_date_context():
     now = datetime.now()
     return f"Hoje é dia {now.strftime('%d/%m/%Y')} (Dia da semana: {now.strftime('%A')}). O horário atual é {now.strftime('%H:%M')}."
 
-@app.get("/api/health")
+@app.get("/")
+async def root():
+    return {"message": "API MCP Senado/Camara Online"}
+
+@app.get("/health")
 async def health_check():
     return {
         "status": "ok",
@@ -40,7 +44,7 @@ async def health_check():
         "tools_list": list(AVAILABLE_TOOLS.keys())
     }
 
-@app.post("/api/chat")
+@app.post("/chat")
 async def chat_endpoint(request: ChatRequest):
     if request.model == "groq":
         return await chat_with_groq(request)
