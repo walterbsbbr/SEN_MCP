@@ -1,9 +1,9 @@
 {
   "mcpServers": {
     "senado-camara": {
-      "command": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11",
+      "command": "python",
       "args": [
-        "/Volumes/STORAGE/DEVELOPMENT/MEUS APPS/GERENCIADOR LEGISLATIVO/MCP SENADO/backend/senado_camara_mcp_server.py"
+        "senado_camara_mcp_server.py"
       ]
     }
   },

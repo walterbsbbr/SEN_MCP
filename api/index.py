@@ -18,10 +18,11 @@ from mcp.client.streamable_http import streamable_http_client
 
 # --- Configuração de Caminhos e Ambiente ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Garante que lê o JSON dentro da pasta api
 CONFIG_FILE = os.path.join(BASE_DIR, "mcp_servers.json")
-ENV_FILE = os.path.join(BASE_DIR, ".env") # Local apenas. No Vercel usa env vars do painel.
+ENV_FILE = os.path.join(BASE_DIR, ".env")
 
-# Carrega .env se existir
+# Carrega variáveis de ambiente
 load_dotenv(ENV_FILE)
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
@@ -68,19 +69,26 @@ async def connect_to_server(name, config, stack):
     cmd = config["command"]
     args = config["args"]
     
-    # Ajuste de caminho para scripts Python
+    # Ajuste de caminho para scripts Python: garante path absoluto baseado no diretório atual (api)
     if (cmd == "python" or cmd == "python3") and args and args[0].endswith(".py"):
         script_path = os.path.join(BASE_DIR, args[0])
         args[0] = script_path
 
-    server_params = StdioServerParameters(command=cmd, args=args, env=os.environ.copy())
+    # Copia variáveis de ambiente para o subprocesso
+    env = os.environ.copy()
+    # Garante que o Python encontre módulos na pasta atual
+    env["PYTHONPATH"] = BASE_DIR
+
+    server_params = StdioServerParameters(command=cmd, args=args, env=env)
 
     try:
         transport = await stack.enter_async_context(stdio_client(server_params))
         read, write = transport
         session = await stack.enter_async_context(ClientSession(read, write))
-        await asyncio.wait_for(session.initialize(), timeout=5.0)
-        result = await asyncio.wait_for(session.list_tools(), timeout=5.0)
+        
+        # Timeout aumentado para garantir inicialização de scripts pesados
+        await asyncio.wait_for(session.initialize(), timeout=10.0)
+        result = await asyncio.wait_for(session.list_tools(), timeout=10.0)
         
         mcp_sessions[name] = session
         for tool in result.tools:
@@ -108,10 +116,10 @@ async def connect_to_http_server(name, config, stack):
         read, write, _ = transport
         session = ClientSession(read, write)
         await stack.enter_async_context(session)
-        await asyncio.wait_for(session.initialize(), timeout=5.0)
+        await asyncio.wait_for(session.initialize(), timeout=10.0)
         mcp_sessions[name] = session
         
-        result = await asyncio.wait_for(session.list_tools(), timeout=5.0)
+        result = await asyncio.wait_for(session.list_tools(), timeout=10.0)
         for tool in result.tools:
             mcp_tools_map[tool.name] = name
             gemini_tools_schema.append({
@@ -141,6 +149,9 @@ async def lifespan(app: FastAPI):
                 if tasks: await asyncio.gather(*tasks)
             except Exception as e:
                 print(f"⚠️ Erro config: {e}")
+        else:
+            print(f"⚠️ Arquivo de configuração não encontrado: {CONFIG_FILE}")
+            
         yield
         print("🛑 Desligando...")
 
